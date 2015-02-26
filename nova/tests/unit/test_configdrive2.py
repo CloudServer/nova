@@ -15,7 +15,9 @@
 
 
 import os
+import shutil
 import tempfile
+import uuid
 
 import mock
 from mox3 import mox
@@ -89,6 +91,39 @@ class ConfigDriveTestCase(test.NoDBTestCase):
             # filesystem creation stuff has been mocked out because it
             # requires root permissions
 
+        finally:
+            if imagefile:
+                fileutils.delete_if_exists(imagefile)
+
+    def test_create_configdrive_ext4_ploop(self):
+        CONF.set_override('config_drive_format', 'ext4')
+        CONF.set_override('virt_type', 'parallels', 'libvirt')
+        imagefile = None
+        try:
+            self.mox.StubOutWithMock(utils, 'execute')
+            self.mox.StubOutWithMock(utils, 'trycmd')
+
+            utils.execute('ploop',
+                      'init',
+                      '-s', mox.IgnoreArg(),
+                      '-t', 'ext4',
+                      mox.IgnoreArg(),
+                      attempts=1,
+                      run_as_root=True).AndReturn(None)
+            utils.trycmd('ploop', 'mount',
+                        '-m', mox.IgnoreArg(),
+                        '-t', 'ext4',
+                        mox.IgnoreArg(),
+                        run_as_root=True).AndReturn((None, None))
+            utils.execute('chown', '-R', mox.IgnoreArg(),
+                    mox.IgnoreArg(), run_as_root=True).AndReturn(None)
+            utils.execute('ploop', 'umount',
+                    mox.IgnoreArg(), run_as_root=True).AndReturn(None)
+            self.mox.ReplayAll()
+            with configdrive.ConfigDriveBuilder(FakeInstanceMD()) as c:
+                imagefile = "/tmp/cd_ext4_" + str(uuid.uuid4())[:8]
+                c.make_drive(imagefile, image_type='ploop')
+                shutil.rmtree(imagefile)
         finally:
             if imagefile:
                 fileutils.delete_if_exists(imagefile)

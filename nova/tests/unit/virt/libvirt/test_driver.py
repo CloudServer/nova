@@ -11313,6 +11313,7 @@ class LibvirtDriverTestCase(test.NoDBTestCase):
         inst['key_data'] = 'ABCDEFG'
         inst['system_metadata'] = {}
         inst['metadata'] = {}
+        inst['vm_mode'] = 'hvm'
 
         inst.update(params)
 
@@ -12491,7 +12492,7 @@ class LibvirtDriverTestCase(test.NoDBTestCase):
 
         mock_add.assert_any_call(mock.ANY)
         expected_call = [mock.call(os.path.join(CONF.instances_path,
-                                                configdrive_path))]
+                                                configdrive_path), None)]
         mock_make.assert_has_calls(expected_call)
 
     @mock.patch('shutil.rmtree')

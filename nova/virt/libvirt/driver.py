@@ -2824,7 +2824,12 @@ class LibvirtDriver(driver.ComputeDriver):
                          {'path': configdrive_path}, instance=instance)
 
                 try:
-                    cdb.make_drive(configdrive_path)
+                    os_type = vm_mode.get_from_instance(instance)
+                    image_type = 'raw'
+                    if (CONF.libvirt.virt_type == "parallels"):
+                        if (os_type == vm_mode.EXE):
+                            image_type = 'ploop'
+                    cdb.make_drive(configdrive_path, image_type)
                 except processutils.ProcessExecutionError as e:
                     with excutils.save_and_reraise_exception():
                         LOG.error(_LE('Creating config drive failed '
@@ -3137,6 +3142,12 @@ class LibvirtDriver(driver.ComputeDriver):
         elif os_type == vm_mode.EXE and CONF.libvirt.virt_type == "parallels":
             fs = self._get_guest_fs_config(instance, "disk")
             devices.append(fs)
+            if 'disk.config' in disk_mapping:
+                disk_config_image = self.image_backend.image(instance,
+                                                             "disk.config",
+                                                             "ploop")
+                devices.append(disk_config_image.libvirt_fs_info(
+                    "/mnt/disk.config", "ploop"))
         else:
 
             if rescue:
