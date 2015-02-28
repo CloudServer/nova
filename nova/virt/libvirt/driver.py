@@ -381,7 +381,7 @@ MIN_LIBVIRT_HYPERV_FEATURE_EXTRA_VERSION = (1, 1, 0)
 MIN_QEMU_HYPERV_FEATURE_VERSION = (1, 1, 0)
 
 # parallels driver support
-MIN_LIBVIRT_PARALLELS_VERSION = (1, 2, 12)
+MIN_LIBVIRT_PARALLELS_VERSION = (1, 1, 1)
 
 
 class LibvirtDriver(driver.ComputeDriver):
