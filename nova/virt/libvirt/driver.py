@@ -3147,7 +3147,7 @@ class LibvirtDriver(driver.ComputeDriver):
                                                              "disk.config",
                                                              "ploop")
                 devices.append(disk_config_image.libvirt_fs_info(
-                    "/mnt/disk.config", "ploop"))
+                    "/var/lib/cloud/seed/config_drive", "ploop"))
         else:
 
             if rescue:
