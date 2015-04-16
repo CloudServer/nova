@@ -785,10 +785,10 @@ class Ploop(Image):
             libvirt_utils.copy_image(base, image_path)
             utils.execute('ploop', 'restore-descriptor', '-f', self.pcs_format,
                           target, image_path)
-            #if size:
-            #    dd_path = os.path.join(self.path, "DiskDescriptor.xml")
-            #    utils.execute('ploop', 'grow', '-s', '%dK' % size,
-            #                  dd_path, run_as_root=True)
+            if size:
+                utils.execute('prl_disk_tool', 'resize', '--size',
+                              '%dM' % (size >> 20), '--resize_partition',
+                              '--hdd', self.path, run_as_root=True)
 
         if not os.path.exists(self.path):
             if CONF.force_raw_images:
