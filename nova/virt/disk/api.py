@@ -172,8 +172,15 @@ def get_disk_size(path):
     return images.qemu_img_info(path).virtual_size
 
 
-def extend(image, size, use_cow=False):
+def extend(image, size, use_cow=False, is_ploop=False):
     """Increase image to size."""
+    if is_ploop:
+        gbytes_size = str(size / 1073741824) + 'G';
+        utils.execute('prl_disk_tool', 'resize',
+                      '--size', gbytes_size, '--resize_partition',
+                      '--hdd', image, run_as_root=True)
+        return
+
     if not can_resize_image(image, size):
         return
 

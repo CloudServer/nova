@@ -304,7 +304,7 @@ def copy_image(src, dest, host=None, receive=False):
         # sparse files.  I.E. holes will not be written to DEST,
         # rather recreated efficiently.  In addition, since
         # coreutils 8.11, holes can be read efficiently too.
-        execute('cp', src, dest)
+        execute('cp', '-r', src, dest)
     else:
         if receive:
             src = "%s:%s" % (utils.safe_ip_format(host), src)
@@ -318,11 +318,11 @@ def copy_image(src, dest, host=None, receive=False):
             # Do a relatively light weight test first, so that we
             # can fall back to scp, without having run out of space
             # on the destination for example.
-            execute('rsync', '--sparse', '--compress', '--dry-run', src, dest)
+            execute('rsync', '-r', '--sparse', '--compress', '--dry-run', src, dest)
         except processutils.ProcessExecutionError:
-            execute('scp', src, dest)
+            execute('scp', '-r', src, dest)
         else:
-            execute('rsync', '--sparse', '--compress', src, dest)
+            execute('rsync', '-r', '--sparse', '--compress', src, dest)
 
 
 def write_to_file(path, contents, umask=None):
