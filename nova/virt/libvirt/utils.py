@@ -383,6 +383,8 @@ def extract_snapshot(disk_path, source_fmt, out_path, dest_fmt):
     # NOTE(markmc): ISO is just raw to qemu-img
     if dest_fmt == 'iso':
         dest_fmt = 'raw'
+    if dest_fmt == 'ploop':
+        dest_fmt = 'parallels'
 
     qemu_img_cmd = ('qemu-img', 'convert', '-f', source_fmt, '-O', dest_fmt)
 
@@ -468,6 +470,9 @@ def get_disk_type(path):
         return 'lvm'
     elif path.startswith('rbd:'):
         return 'rbd'
+    elif (os.path.isdir(path) and
+          os.path.exists(os.path.join(path, "DiskDescriptor.xml"))):
+        return 'ploop'
 
     return images.qemu_img_info(path).file_format
 
