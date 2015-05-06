@@ -444,11 +444,15 @@ def find_disk(virt_dom):
     """
     xml_desc = virt_dom.XMLDesc(0)
     domain = etree.fromstring(xml_desc)
+    os_type = domain.find('os/type').text
     if CONF.libvirt.virt_type == 'lxc':
         source = domain.find('devices/filesystem/source')
         disk_path = source.get('dir')
         disk_path = disk_path[0:disk_path.rfind('rootfs')]
         disk_path = os.path.join(disk_path, 'disk')
+    elif CONF.libvirt.virt_type == 'parallels' and os_type == 'exe':
+        source = domain.find('devices/filesystem/source')
+        disk_path = source.get('file')
     else:
         source = domain.find('devices/disk/source')
         disk_path = source.get('file') or source.get('dev')
