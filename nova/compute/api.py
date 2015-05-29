@@ -703,7 +703,13 @@ class API(base.Base):
                                  block_device_mapping, legacy_bdm):
         # NOTE (ndipanov): Assume root dev name is 'vda' if not supplied.
         #                  It's needed for legacy conversion to work.
-        root_device_name = (base_options.get('root_device_name') or 'vda')
+        if CONF.libvirt.virt_type == 'parallels':
+            default_root_device = 'sda'
+        else:
+            default_root_device = 'vda'
+        root_device_name = (base_options.get('root_device_name') or
+                            default_root_device)
+
         image_ref = base_options.get('image_ref', '')
         # If the instance is booted by image and has a volume attached,
         # the volume cannot have the same device name as root_device_name
