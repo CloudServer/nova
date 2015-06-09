@@ -38,6 +38,7 @@ KVM = "kvm"
 LXC = "lxc"
 OPENVZ = "openvz"
 PARALLELS = "parallels"
+VIRTUOZZO = "vz"
 PHYP = "phyp"
 QEMU = "qemu"
 TEST = "test"
@@ -59,6 +60,7 @@ ALL = (
     LXC,
     OPENVZ,
     PARALLELS,
+    VIRTUOZZO,
     PHYP,
     QEMU,
     TEST,
