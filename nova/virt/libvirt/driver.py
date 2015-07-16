@@ -3458,10 +3458,16 @@ class LibvirtDriver(driver.ComputeDriver):
                                   inst_type['extra_specs'],
                                   self._get_hypervisor_version())
 
+    def _get_guest_fs_config(self, instance, name, image_type=None):
+        image = self.image_backend.image(instance,
+                                         name,
+                                         image_type)
+        return image.libvirt_fs_info("/", "ploop")
+
     def _get_guest_storage_config(self, instance, image_meta,
                                   disk_info,
                                   rescue, block_device_info,
-                                  inst_type):
+                                  inst_type, os_type):
         devices = []
         disk_mapping = disk_info['mapping']
 
@@ -3473,6 +3479,9 @@ class LibvirtDriver(driver.ComputeDriver):
             fs.source_type = "mount"
             fs.source_dir = os.path.join(
                 libvirt_utils.get_instance_path(instance), 'rootfs')
+            devices.append(fs)
+        elif os_type == vm_mode.EXE and CONF.libvirt.virt_type == "parallels":
+            fs = self._get_guest_fs_config(instance, "disk")
             devices.append(fs)
         else:
 
@@ -3983,7 +3992,7 @@ class LibvirtDriver(driver.ComputeDriver):
                                                   disk_info,
                                                   rescue,
                                                   block_device_info,
-                                                  flavor):
+                                                  flavor, guest.os_type):
             guest.add_device(config)
 
         for vif in network_info:
