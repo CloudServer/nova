@@ -626,7 +626,8 @@ class Connection(object):
                          'qemu:///session',
                          'xen:///system',
                          'uml:///system',
-                         'test:///default']
+                         'test:///default',
+                         'parallels:///system']
 
         if uri not in uri_whitelist:
             raise make_libvirtError(

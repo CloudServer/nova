@@ -21,7 +21,7 @@
 """
 A connection to a hypervisor through libvirt.
 
-Supports KVM, LXC, QEMU, UML, and XEN.
+Supports KVM, LXC, QEMU, UML, XEN and Parallels.
 
 """
 
@@ -129,7 +129,7 @@ libvirt_opts = [
     cfg.StrOpt('virt_type',
                default='kvm',
                help='Libvirt domain type (valid options are: '
-                    'kvm, lxc, qemu, uml, xen)'),
+                    'kvm, lxc, qemu, uml, xen and parallels)'),
     cfg.StrOpt('connection_uri',
                default='',
                help='Override the default libvirt URI '
@@ -363,6 +363,9 @@ MIN_QEMU_DISCARD_VERSION = (1, 6, 0)
 REQ_HYPERVISOR_DISCARD = "QEMU"
 # libvirt numa topology support
 MIN_LIBVIRT_NUMA_TOPOLOGY_VERSION = (1, 0, 4)
+
+# parallels driver support
+MIN_LIBVIRT_PARALLELS_VERSION = (1, 2, 12)
 
 
 def libvirt_error_handler(context, err):
@@ -730,6 +733,9 @@ class LibvirtDriver(driver.ComputeDriver):
                          'HypervisorSupportMatrix'),
                         {'type': CONF.libvirt.virt_type, 'arch': hostarch})
 
+    def _version_to_string(self, version):
+        return "%i.%i.%i" % version
+
     def init_host(self, host):
         # NOTE(dkliban): Error handler needs to be registered before libvirt
         #                connection is used for the first time.  Otherwise, the
@@ -753,12 +759,14 @@ class LibvirtDriver(driver.ComputeDriver):
             guestfs.force_tcg()
 
         if not self._has_min_version(MIN_LIBVIRT_VERSION):
-            major = MIN_LIBVIRT_VERSION[0]
-            minor = MIN_LIBVIRT_VERSION[1]
-            micro = MIN_LIBVIRT_VERSION[2]
-            LOG.error(_LE('Nova requires libvirt version '
-                          '%(major)i.%(minor)i.%(micro)i or greater.'),
-                      {'major': major, 'minor': minor, 'micro': micro})
+            LOG.error(_LE('Nova requires libvirt version %s or greater.') %
+                      self._version_to_string(MIN_LIBVIRT_VERSION))
+
+        if (CONF.libvirt.virt_type == 'parallels' and
+            not self._has_min_version(MIN_LIBVIRT_PARALLELS_VERSION)):
+            LOG.error(_LE('Running Nova with parallels virt_type requires '
+                  'libvirt version %s') %
+                self._version_to_string(MIN_LIBVIRT_PARALLELS_VERSION))
 
         self._init_events()
 
@@ -847,6 +855,8 @@ class LibvirtDriver(driver.ComputeDriver):
             uri = CONF.libvirt.connection_uri or 'xen:///'
         elif CONF.libvirt.virt_type == 'lxc':
             uri = CONF.libvirt.connection_uri or 'lxc:///'
+        elif CONF.libvirt.virt_type == 'parallels':
+            uri = CONF.libvirt.connection_uri or 'parallels:///system'
         else:
             uri = CONF.libvirt.connection_uri or 'qemu:///system'
         return uri
@@ -3592,7 +3602,7 @@ class LibvirtDriver(driver.ComputeDriver):
         dev.domain, dev.bus, dev.slot, dev.function = dbsf
 
         # only kvm support managed mode
-        if CONF.libvirt.virt_type in ('xen',):
+        if CONF.libvirt.virt_type in ('xen', 'parallels',):
             dev.managed = 'no'
         if CONF.libvirt.virt_type in ('kvm', 'qemu'):
             dev.managed = 'yes'
@@ -3888,6 +3898,9 @@ class LibvirtDriver(driver.ComputeDriver):
         elif CONF.libvirt.virt_type == "uml":
             guest.os_kernel = "/usr/bin/linux"
             guest.os_root = root_device_name
+        elif CONF.libvirt.virt_type == "parallels":
+            if guest.os_type == vm_mode.EXE:
+                guest.os_init_path = "/sbin/init"
         else:
             if rescue:
                 if rescue.get('kernel_id'):
@@ -3924,7 +3937,8 @@ class LibvirtDriver(driver.ComputeDriver):
                 guest.os_boot_dev = blockinfo.get_boot_order(disk_info)
 
         if ((CONF.libvirt.virt_type != "lxc" and
-             CONF.libvirt.virt_type != "uml")):
+             CONF.libvirt.virt_type != "uml" and
+             CONF.libvirt.virt_type != "parallels")):
             guest.acpi = True
             guest.apic = True
 
@@ -4008,8 +4022,9 @@ class LibvirtDriver(driver.ComputeDriver):
         else:
             consolepty = vconfig.LibvirtConfigGuestConsole()
 
-        consolepty.type = "pty"
-        guest.add_device(consolepty)
+        if CONF.libvirt.virt_type != 'parallels':
+            consolepty.type = "pty"
+            guest.add_device(consolepty)
 
         # We want a tablet if VNC is enabled, or SPICE is enabled and
         # the SPICE agent is disabled. If the SPICE agent is enabled
@@ -4071,6 +4086,8 @@ class LibvirtDriver(driver.ComputeDriver):
             guestarch = libvirt_utils.get_arch(image_meta)
             if guest.os_type == vm_mode.XEN:
                 video.type = 'xen'
+            elif CONF.libvirt.virt_type == 'parallels':
+                video.type = 'vga'
             elif guestarch in (arch.PPC, arch.PPC64):
                 # NOTE(ldbragst): PowerKVM doesn't support 'cirrus' be default
                 # so use 'vga' instead when running on Power hardware.
