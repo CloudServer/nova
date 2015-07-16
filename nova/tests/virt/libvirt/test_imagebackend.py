@@ -33,6 +33,7 @@ from nova import test
 from nova.tests import fake_processutils
 from nova.tests.virt.libvirt import fake_libvirt_utils
 from nova.virt import images
+from nova.virt.libvirt import config as vconfig
 from nova.virt.libvirt import imagebackend
 from nova.virt.libvirt import rbd_utils
 
@@ -127,6 +128,20 @@ class _ImageTestCase(object):
         image = self.image_class(self.INSTANCE, self.NAME)
         self.assertEqual(2361393152, image.get_disk_size(image.path))
         get_disk_size.assert_called_once_with(image.path)
+
+    def test_libvirt_fs_info(self):
+        image = self.image_class(self.INSTANCE, self.NAME)
+        fs = image.libvirt_fs_info("/mnt")
+        # check that exception hasn't been raised and the method
+        # returned correct object
+        self.assertIsInstance(fs, vconfig.LibvirtConfigGuestFilesys)
+        self.assertEqual(fs.target_dir, "/mnt")
+        if image.is_block_dev:
+            self.assertEqual(fs.source_type, "block")
+            self.assertEqual(fs.source_dev, image.path)
+        else:
+            self.assertEqual(fs.source_type, "file")
+            self.assertEqual(fs.source_file, image.path)
 
 
 class RawTestCase(_ImageTestCase, test.NoDBTestCase):
