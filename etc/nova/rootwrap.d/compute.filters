@@ -228,4 +228,4 @@ sync: CommandFilter, sync, root
 
 # nova/virt/libvirt/imagebackend.py:
 ploop: CommandFilter, ploop, root
-prl_disk_tool: CommandFilter, prl_disk_tool, root
+prl_disk_tool: RegExpFilter, prl_disk_tool, root, prl_disk_tool, resize, --size, .*, --resize_partition, --round_down, --hdd, .*

@@ -6038,7 +6038,7 @@ class LibvirtDriver(driver.ComputeDriver):
                         libvirt_utils.copy_image(tmp_path, img_path, host=dest)
                         utils.execute('rm', '-f', tmp_path)
 
-                else:  # raw or qcow2 with no backing file
+                else:  # raw, ploop or qcow2 with no backing file
                     libvirt_utils.copy_image(from_path, img_path, host=dest)
         except Exception:
             with excutils.save_and_reraise_exception():
@@ -6102,6 +6102,12 @@ class LibvirtDriver(driver.ComputeDriver):
         # then ensure we're in 'raw' format so we can extend file system.
         fmt, org = [info['type']] * 2
         pth = info['path']
+
+        if (fmt == 'ploop'):
+            if (size):
+                disk.extend(pth, size, use_cow=False, is_ploop=True)
+            return
+
         if (size and fmt == 'qcow2' and
                 disk.can_resize_image(pth, size) and
                 disk.is_image_partitionless(pth, use_cow=True)):

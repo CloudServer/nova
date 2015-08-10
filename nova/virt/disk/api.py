@@ -31,6 +31,7 @@ if os.name != 'nt':
     import crypt
 
 from oslo.config import cfg
+from oslo_utils import units
 
 from nova import exception
 from nova.i18n import _
@@ -151,8 +152,19 @@ def get_disk_size(path):
     return images.qemu_img_info(path).virtual_size
 
 
-def extend(image, size, use_cow=False):
+def extend(image, size, use_cow=False, is_ploop=False):
     """Increase image to size."""
+
+    if is_ploop:
+        if not can_resize_image(image + '/root.hds', size):
+            return
+
+        gbytes_size = str(size / units.Gi) + 'G'
+        utils.execute('prl_disk_tool', 'resize',
+                      '--size', gbytes_size, '--resize_partition',
+                      '--round_down', '--hdd', image.path, run_as_root=True)
+        return
+
     if not can_resize_image(image, size):
         return
 
