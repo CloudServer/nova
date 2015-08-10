@@ -787,7 +787,8 @@ class Ploop(Image):
             if size:
                 utils.execute('prl_disk_tool', 'resize', '--size',
                               '%dM' % (size >> 20), '--resize_partition',
-                              '--hdd', self.path, run_as_root=True)
+                              '--round_down', '--hdd',
+                              self.path, run_as_root=True)
 
         if not os.path.exists(self.path):
             if CONF.force_raw_images:

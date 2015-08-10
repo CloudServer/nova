@@ -1340,9 +1340,9 @@ class PloopTestCase(_ImageTestCase, test.NoDBTestCase):
         imagebackend.libvirt_utils.copy_image(self.TEMPLATE_PATH, img_path)
         self.utils.execute("ploop", "restore-descriptor", "-f", "raw",
                            self.PATH, img_path)
-        self.utils.execute("ploop", "grow", '-s', "2K",
-                           os.path.join(self.PATH, "DiskDescriptor.xml"),
-                           run_as_root=True)
+        self.utils.execute('prl_disk_tool', 'resize', '--size',
+                           '0M', '--resize_partition', '--round_down', '--hdd',
+                           self.PATH, run_as_root=True)
         self.mox.ReplayAll()
 
         image = self.image_class(self.INSTANCE, self.NAME)
