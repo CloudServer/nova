@@ -365,7 +365,7 @@ REQ_HYPERVISOR_DISCARD = "QEMU"
 MIN_LIBVIRT_NUMA_TOPOLOGY_VERSION = (1, 0, 4)
 
 # parallels driver support
-MIN_LIBVIRT_PARALLELS_VERSION = (1, 2, 12)
+MIN_LIBVIRT_PARALLELS_VERSION = (1, 2, 8)
 
 
 def libvirt_error_handler(context, err):
