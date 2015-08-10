@@ -671,7 +671,13 @@ class API(base.Base):
                                  legacy_bdm):
         # NOTE (ndipanov): Assume root dev name is 'vda' if not supplied.
         #                  It's needed for legacy conversion to work.
-        root_device_name = (base_options.get('root_device_name') or 'vda')
+        if CONF.libvirt.virt_type == 'parallels':
+            default_root_device = 'sda'
+        else:
+            default_root_device = 'vda'
+        root_device_name = (base_options.get('root_device_name') or
+                            default_root_device)
+
         image_ref = base_options.get('image_ref', '')
 
         image_defined_bdms = self._get_image_defined_bdms(
