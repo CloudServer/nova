@@ -11605,6 +11605,7 @@ class LibvirtDriverTestCase(test.TestCase):
         inst['ramdisk_id'] = 3
         inst['key_data'] = 'ABCDEFG'
         inst['system_metadata'] = sys_meta
+        inst['vm_mode'] = 'hvm'
 
         inst.update(params)
         return db.instance_create(self.context, inst)
